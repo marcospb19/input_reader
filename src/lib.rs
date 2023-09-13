@@ -32,14 +32,14 @@ impl<'a> InputReader<'a> {
         <T as FromStr>::Err: Debug,
     {
         let piece = self.advance_slice();
-        piece.parse().unwrap()
+        piece.unwrap().parse().unwrap()
     }
 
     pub fn read_option<T: FromStr>(&mut self) -> Option<T>
     where
         <T as FromStr>::Err: Debug,
     {
-        let piece = self.advance_slice();
+        let piece = self.advance_slice()?;
         piece.parse().ok()
     }
 
@@ -58,10 +58,8 @@ impl<'a> InputReader<'a> {
     }
 
     // Update counter and returns the slice, much like a parser
-    pub fn advance_slice(&mut self) -> &'a str {
-        let piece_position = self.input[self.counter..]
-            .find(|x: char| !x.is_whitespace())
-            .expect("Pediu para ler mas acabou já");
+    pub fn advance_slice(&mut self) -> Option<&'a str> {
+        let piece_position = self.input[self.counter..].find(|x: char| !x.is_whitespace())?;
 
         let piece = self.input[self.counter + piece_position..]
             .split_whitespace()
@@ -70,7 +68,7 @@ impl<'a> InputReader<'a> {
 
         self.counter += piece_position + piece.len();
 
-        piece
+        Some(piece)
     }
 
     pub fn is_finished(&self) -> bool {
@@ -80,7 +78,7 @@ impl<'a> InputReader<'a> {
         }
     }
 
-    pub fn read_tuple<T>(&mut self) -> Option<T>
+    pub fn read_tuple_option<T>(&mut self) -> Option<T>
     where
         T: TupleFromStr,
     {
@@ -99,7 +97,7 @@ where
     A: FromStr,
 {
     fn tuple_parse(reader: &mut InputReader) -> Option<(A,)> {
-        reader.advance_slice().parse().ok().map(|x| (x,))
+        reader.advance_slice()?.parse().ok().map(|x| (x,))
     }
 }
 
@@ -109,7 +107,7 @@ where
     B: FromStr,
 {
     fn tuple_parse(reader: &mut InputReader) -> Option<(A, B)> {
-        reader.advance_slice().parse().ok().and_then(|head| {
+        reader.advance_slice()?.parse().ok().and_then(|head| {
             let tail = <(B,)>::tuple_parse(reader)?;
             Some(concat_tuples((head,), tail))
         })
@@ -123,7 +121,7 @@ where
     C: FromStr,
 {
     fn tuple_parse(reader: &mut InputReader) -> Option<(A, B, C)> {
-        reader.advance_slice().parse().ok().and_then(|head| {
+        reader.advance_slice()?.parse().ok().and_then(|head| {
             let tail = <(B, C)>::tuple_parse(reader)?;
             Some(concat_tuples((head,), tail))
         })
@@ -138,7 +136,7 @@ where
     D: FromStr,
 {
     fn tuple_parse(reader: &mut InputReader) -> Option<(A, B, C, D)> {
-        reader.advance_slice().parse().ok().and_then(|head| {
+        reader.advance_slice()?.parse().ok().and_then(|head| {
             let tail = <(B, C, D)>::tuple_parse(reader)?;
             Some(concat_tuples((head,), tail))
         })
@@ -154,7 +152,7 @@ where
     E: FromStr,
 {
     fn tuple_parse(reader: &mut InputReader) -> Option<(A, B, C, D, E)> {
-        reader.advance_slice().parse().ok().and_then(|head| {
+        reader.advance_slice()?.parse().ok().and_then(|head| {
             let tail = <(B, C, D, E)>::tuple_parse(reader)?;
             Some(concat_tuples((head,), tail))
         })
@@ -171,7 +169,7 @@ where
     F: FromStr,
 {
     fn tuple_parse(reader: &mut InputReader) -> Option<(A, B, C, D, E, F)> {
-        reader.advance_slice().parse().ok().and_then(|head| {
+        reader.advance_slice()?.parse().ok().and_then(|head| {
             let tail = <(B, C, D, E, F)>::tuple_parse(reader)?;
             Some(concat_tuples((head,), tail))
         })
@@ -189,7 +187,7 @@ where
     G: FromStr,
 {
     fn tuple_parse(reader: &mut InputReader) -> Option<(A, B, C, D, E, F, G)> {
-        reader.advance_slice().parse().ok().and_then(|head| {
+        reader.advance_slice()?.parse().ok().and_then(|head| {
             let tail = <(B, C, D, E, F, G)>::tuple_parse(reader)?;
             Some(concat_tuples((head,), tail))
         })
@@ -203,22 +201,22 @@ mod tests {
     #[test]
     fn test_parsing() {
         assert_eq!(
-            InputReader::new("a b c").read_tuple::<(String, String, String)>(),
+            InputReader::new("a b c").read_tuple_option::<(String, String, String)>(),
             Some(("a".into(), "b".into(), "c".into()))
         );
 
         assert_eq!(
-            InputReader::new("1 hi false").read_tuple::<(i32, String, bool)>(),
+            InputReader::new("1 hi false").read_tuple_option::<(i32, String, bool)>(),
             Some((1, "hi".into(), false))
         );
 
         assert_eq!(
-            InputReader::new("123 135 159").read_tuple::<(i32, u64, u8)>(),
+            InputReader::new("123 135 159").read_tuple_option::<(i32, u64, u8)>(),
             Some((123, 135, 159))
         );
 
         assert_eq!(
-            InputReader::new("1 2 3 4 5 6").read_tuple::<(u8, u8, u8, u8, u8, u8)>(),
+            InputReader::new("1 2 3 4 5 6").read_tuple_option::<(u8, u8, u8, u8, u8, u8)>(),
             Some((1, 2, 3, 4, 5, 6))
         );
     }
