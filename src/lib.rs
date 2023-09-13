@@ -35,6 +35,14 @@ impl<'a> InputReader<'a> {
         piece.parse().unwrap()
     }
 
+    pub fn read_option<T: FromStr>(&mut self) -> Option<T>
+    where
+        <T as FromStr>::Err: Debug,
+    {
+        let piece = self.advance_slice();
+        piece.parse().ok()
+    }
+
     pub fn read_n<T: FromStr, const N: usize>(&mut self) -> [T; N]
     where
         <T as FromStr>::Err: Debug,
