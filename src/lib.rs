@@ -73,6 +73,13 @@ impl<'a> InputReader<'a> {
         piece
     }
 
+    pub fn is_finished(&self) -> bool {
+        match self.input.get(self.counter..) {
+            Some(rest) => rest.chars().all(char::is_whitespace),
+            None => true,
+        }
+    }
+
     pub fn read_tuple<T>(&mut self) -> Option<T>
     where
         T: TupleFromStr,
